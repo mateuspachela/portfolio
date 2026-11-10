@@ -1,0 +1,115 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="pt-BR" data-view="human">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate" type="text/markdown" href="/llms.txt" title="Versão para agentes" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="theme-color" content="#090a0d" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
+    />
+
+    <script is:inline>
+      document.documentElement.classList.add('js');
+      // Se o script principal não carregar, mostra tudo em vez de deixar o conteúdo escondido
+      setTimeout(() => {
+        if (!document.documentElement.classList.contains('reveal-ready')) document.documentElement.classList.remove('js');
+      }, 2500);
+      try {
+        const v = localStorage.getItem('view');
+        if (v === 'machine') document.documentElement.dataset.view = 'machine';
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <slot />
+
+    <script>
+      import Lenis from 'lenis';
+
+      document.documentElement.classList.add('reveal-ready');
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // Scroll suave (desligado para quem pede menos movimento)
+      if (!reduce) {
+        const lenis = new Lenis({ anchors: { offset: -72 }, lerp: 0.12 });
+        const raf = (t: number) => {
+          lenis.raf(t);
+          requestAnimationFrame(raf);
+        };
+        requestAnimationFrame(raf);
+      }
+
+      // Revelação dos blocos ao entrar na tela
+      const revelar = document.querySelectorAll<HTMLElement>('[data-reveal]');
+      revelar.forEach((el) => {
+        if (el.dataset.delay) el.style.setProperty('--delay', `${el.dataset.delay}s`);
+      });
+      const io = new IntersectionObserver(
+        (entradas) => {
+          entradas.forEach((e) => {
+            if (e.isIntersecting) {
+              e.target.classList.add('is-in');
+              io.unobserve(e.target);
+            }
+          });
+        },
+        { rootMargin: '0px 0px -8% 0px' },
+      );
+      revelar.forEach((el) => io.observe(el));
+
+      // Alternância Human / Machine
+      const root = document.documentElement;
+      const sync = () => {
+        document.querySelectorAll<HTMLButtonElement>('[data-set-view]').forEach((b) => {
+          b.setAttribute('aria-pressed', String(b.dataset.setView === root.dataset.view));
+        });
+      };
+      document.querySelectorAll<HTMLButtonElement>('[data-set-view]').forEach((b) => {
+        b.addEventListener('click', () => {
+          root.dataset.view = b.dataset.setView!;
+          try {
+            localStorage.setItem('view', root.dataset.view);
+          } catch (e) {}
+          sync();
+          window.scrollTo({ top: 0 });
+        });
+      });
+      sync();
+
+      // Brilho que segue o cursor no hero
+      const hero = document.querySelector<HTMLElement>('[data-glow]');
+      if (hero && !reduce) {
+        hero.addEventListener('pointermove', (e) => {
+          const r = hero.getBoundingClientRect();
+          hero.style.setProperty('--mx', `${e.clientX - r.left}px`);
+          hero.style.setProperty('--my', `${e.clientY - r.top}px`);
+        });
+      }
+    </script>
+  </body>
+</html>
