@@ -1,26 +1,33 @@
 ---
 import '../styles/global.css';
 
+import { base, conteudos, type Lang } from '../data';
+
 interface Props {
   title: string;
   description: string;
+  lang: Lang;
 }
 
-const { title, description } = Astro.props;
+const { title, description, lang } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
-<html lang="pt-BR" data-view="human">
+<html lang={conteudos[lang].ui.htmlLang} data-view="human">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="pt-BR" href={new URL(base.pt, Astro.site)} />
+    <link rel="alternate" hreflang="en" href={new URL(base.en, Astro.site)} />
+    <link rel="alternate" hreflang="x-default" href={new URL(base.pt, Astro.site)} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="alternate" type="text/markdown" href="/llms.txt" title="Versão para agentes" />
+    <link rel="alternate" type="text/markdown" href={`${base[lang]}llms.txt`} title={lang === 'pt' ? 'Versão para agentes' : 'Version for agents'} />
     <meta property="og:type" content="website" />
+    <meta property="og:locale" content={lang === 'pt' ? 'pt_BR' : 'en_US'} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />

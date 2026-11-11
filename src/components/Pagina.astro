@@ -1,0 +1,1205 @@
+---
+import Base from '../layouts/Base.astro';
+import AgentConsole from './AgentConsole.tsx';
+import { conteudos, base, type Lang } from '../data';
+import { perfilEmMarkdown } from '../lib/markdown';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = conteudos[lang];
+const { ui, perfil, destaques, sobre, principios, experiencias, projetos, formacao } = c;
+const llms = `${base[lang]}llms.txt`;
+const ano = new Date().getFullYear();
+const md = perfilEmMarkdown(c, new URL(base[lang], Astro.site));
+---
+
+<Base title={`${perfil.nome} · ${perfil.cargo}`} description={perfil.resumo} lang={lang}>
+  <a class="skip" href="#conteudo">{ui.pular}</a>
+
+  <header class="topo">
+    <div class="topo-pilula">
+      <a href="#inicio" class="marca" aria-label={perfil.nome}><span class="marca-longa">{perfil.nome}</span><span class="marca-curta" aria-hidden="true">MP</span></a>
+      <nav aria-label={ui.navAria} class="topo-nav human-only">
+        <a href="#sobre">{ui.nav.sobre}</a>
+        <a href="#trabalho">{ui.nav.trabalho}</a>
+        <a href="#projetos">{ui.nav.projetos}</a>
+      </nav>
+      <div class="idioma mono" role="group" aria-label={ui.idiomaAria}>
+        <a href={base.pt} hreflang="pt-BR" lang="pt-BR" data-set-lang="pt" aria-current={lang === 'pt' ? 'true' : undefined}>PT</a>
+        <a href={base.en} hreflang="en" lang="en" data-set-lang="en" aria-current={lang === 'en' ? 'true' : undefined}>EN</a>
+      </div>
+      <div class="vista mono" role="group" aria-label={ui.vistaAria}>
+        <button type="button" data-set-view="human" aria-pressed="true">Human</button>
+        <button type="button" data-set-view="machine" aria-pressed="false">Machine</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <!-- Visão para agentes -->
+    <section class="machine-only wrap maquina" aria-label={ui.maquinaAria}>
+      <div class="maquina-cab mono">
+        <span>{ui.maquinaArquivo}</span>
+        <a href={llms}>{llms} ↗</a>
+      </div>
+      <pre class="mono">{md}</pre>
+    </section>
+
+    <div class="human-only">
+      <!-- HERO -->
+      <section id="inicio" class="hero" data-glow>
+        <div class="hero-grade" aria-hidden="true"></div>
+        <div class="hero-brilho" aria-hidden="true"></div>
+        <div class="wrap hero-conteudo">
+          <div class="hero-texto">
+            <p class="mono kicker" data-reveal>
+              <span class="ponto-vivo" aria-hidden="true"></span>
+              {perfil.cargo} @ {perfil.empresa} · Unicamp
+            </p>
+            <h1 data-reveal data-delay="0.05">
+              {ui.h1[0]}<em class="serif">{ui.h1[1]}</em>
+            </h1>
+            <p class="lede" data-reveal data-delay="0.1">{perfil.resumo}</p>
+            <div class="acoes" data-reveal data-delay="0.15">
+              <a href="#trabalho" class="botao primario">{ui.verTrabalho}</a>
+              {perfil.links.filter((l) => l.href.startsWith('http')).map((l) => (
+                <a href={l.href} class="botao" target="_blank" rel="me noopener">{l.label} ↗</a>
+              ))}
+            </div>
+          </div>
+          <div class="hero-console" data-reveal data-delay="0.2">
+            <AgentConsole client:visible lang={lang} />
+          </div>
+        </div>
+      </section>
+
+      <!-- DESTAQUES -->
+      <section class="wrap destaques" aria-label={ui.destaquesAria}>
+        {destaques.map((d, i) => (
+          <div class="destaque" data-reveal data-delay={String(i * 0.08)}>
+            <p class="destaque-valor">{d.valor}</p>
+            <p class="mono destaque-rotulo">{d.rotulo}</p>
+          </div>
+        ))}
+      </section>
+
+      <!-- SOBRE: logo depois da prova (hero + números), antes do detalhe do trabalho -->
+      <section id="sobre" class="wrap secao">
+        <header class="secao-cab" data-reveal>
+          <p class="mono rotulo">{ui.secoes.sobre}</p>
+        </header>
+        <div class="sobre">
+          <figure class="sobre-foto" data-reveal>
+            <img src="/fotos/pitch.webp" alt={ui.fotoAlt} width="720" height="720" loading="lazy" decoding="async" />
+          </figure>
+          <div class="sobre-texto">
+            <blockquote class="sobre-frase serif" data-reveal>{sobre.frase}</blockquote>
+            {sobre.paragrafos.map((p) => <p data-reveal>{p}</p>)}
+            <blockquote class="clarice" data-reveal>
+              <p class="serif">“{sobre.citacao.texto}”</p>
+              {sobre.citacao.traducao && <p class="clarice-traducao">{sobre.citacao.traducao}</p>}
+              <cite class="mono">{sobre.citacao.fonte}</cite>
+            </blockquote>
+            <ul class="formacao" data-reveal>
+              {formacao.map((f) => (
+                <li>
+                  <span>{f.titulo} <span class="sub">· {f.lugar}</span></span>
+                  <span class="mono meta">{f.periodo}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- EXPERIÊNCIA -->
+      <section id="trabalho" class="wrap secao">
+        <header class="secao-cab" data-reveal>
+          <p class="mono rotulo">{ui.secoes.trabalho}</p>
+          <h2>{ui.secoes.trabalhoTitulo[0]}<em class="serif">{ui.secoes.trabalhoTitulo[1]}</em></h2>
+        </header>
+
+        {experiencias.map((e) => (
+          <article id={e.id} class="exp">
+            <aside class="exp-lado">
+              <div class="exp-fixo" data-reveal>
+                <p class="mono meta">{e.periodo}</p>
+                <h3>{e.empresa}</h3>
+                <p class="sub">{e.cargo}</p>
+                <ul class="tags" aria-label={ui.tagsAria}>
+                  {e.stack.map((s) => <li>{s}</li>)}
+                </ul>
+              </div>
+            </aside>
+            <div class="exp-conteudo">
+              <p class="exp-resumo" data-reveal>{e.resumo}</p>
+              {e.frase && (
+                <blockquote class="citacao serif" data-reveal>
+                  “{e.frase}”
+                </blockquote>
+              )}
+              <ol class="blocos">
+                {e.blocos.map((b, i) => (
+                  <li class="bloco" data-reveal data-delay={String(i * 0.05)}>
+                    <span class="mono bloco-n">{String(i + 1).padStart(2, '0')}</span>
+                    <div>
+                      <h4>{b.titulo}</h4>
+                      <p>{b.texto}</p>
+                      {b.numeros && (
+                        <dl class="bloco-numeros">
+                          {b.numeros.map((n) => (
+                            <div>
+                              <dt class="mono">{n.rotulo}</dt>
+                              <dd>{n.valor}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                      )}
+                      {b.comparativo && (
+                        <figure class="comparativo" aria-label={`${b.comparativo.depois.rotulo}: ${b.comparativo.depois.texto}. ${b.comparativo.antes.rotulo}: ${b.comparativo.antes.texto}.`}>
+                          <div class="comp-linha depois">
+                            <div class="comp-rotulo">
+                              <span class="mono">{b.comparativo.depois.rotulo}</span>
+                              <strong>{b.comparativo.depois.texto}</strong>
+                            </div>
+                            <div class="comp-trilho">
+                              <span class="comp-barra" style={`--w:${(b.comparativo.depois.semanas / b.comparativo.antes.semanas[1]) * 100}%`}></span>
+                            </div>
+                          </div>
+                          <div class="comp-linha antes">
+                            <div class="comp-rotulo">
+                              <span class="mono">{b.comparativo.antes.rotulo}</span>
+                              <strong>{b.comparativo.antes.texto}</strong>
+                            </div>
+                            <div class="comp-trilho">
+                              <span class="comp-barra" style={`--w:${(b.comparativo.antes.semanas[0] / b.comparativo.antes.semanas[1]) * 100}%`}></span>
+                              <span class="comp-faixa" style={`--l:${(b.comparativo.antes.semanas[0] / b.comparativo.antes.semanas[1]) * 100}%`}></span>
+                            </div>
+                          </div>
+                          <figcaption class="mono">
+                            {ui.comparativoLegenda(Math.round(b.comparativo.antes.semanas[0] / b.comparativo.depois.semanas), Math.round(b.comparativo.antes.semanas[1] / b.comparativo.depois.semanas))}
+                          </figcaption>
+                        </figure>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <!-- PROJETOS -->
+      <section id="projetos" class="wrap secao">
+        <header class="secao-cab" data-reveal>
+          <p class="mono rotulo">{ui.secoes.projetos}</p>
+          <h2>{ui.secoes.projetosTitulo[0]}<em class="serif">{ui.secoes.projetosTitulo[1]}</em></h2>
+        </header>
+
+        <div class="projetos">
+          {projetos.map((p) => (
+            <article id={p.id} class="projeto" data-reveal>
+              <div class="projeto-topo mono">
+                <span>{p.contexto}</span>
+                <span class="projeto-dir">
+                  {p.selo && <span class="selo">★ {p.selo}</span>}
+                  <span class="meta">{p.data}</span>
+                </span>
+              </div>
+              <h3 class="projeto-nome">{p.nome}</h3>
+              <p class="projeto-frase serif">{p.frase}</p>
+              <div class="projeto-grid">
+                <div>
+                  <p class="projeto-desc">{p.descricao}</p>
+                  <p class="papel"><span class="mono">{ui.minhaParte}</span> {p.papel}</p>
+                  <p class="mono meta time">{p.time}</p>
+                </div>
+                <div class="projeto-lado">
+                  {p.foto && (
+                    <figure class="projeto-foto">
+                      <img src={p.foto.src} alt={p.foto.alt} width="380" height="400" loading="lazy" decoding="async" />
+                    </figure>
+                  )}
+                  {p.numeros.length > 0 && (
+                    <dl class="numeros">
+                      {p.numeros.map((n) => (
+                        <div>
+                          <dt class="mono">{n.rotulo}</dt>
+                          <dd>{n.valor}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )}
+                  <ul class="tags" aria-label={ui.tagsAria}>
+                    {p.stack.map((s) => <li>{s}</li>)}
+                  </ul>
+                </div>
+              </div>
+              {p.caso && (
+                <div class="caso">
+                  <p class="mono caso-titulo">{p.caso.titulo}</p>
+                  <ol>
+                    {p.caso.passos.map((s) => <li>{s}</li>)}
+                  </ol>
+                </div>
+              )}
+              {p.aviso && <p class="aviso mono">{p.aviso}</p>}
+              <ul class="projeto-links">
+                {p.links.map((l) => (
+                  <li><a href={l.href} target="_blank" rel="noopener">{l.label} ↗</a></li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <!-- COMO TRABALHO -->
+      <section class="wrap secao">
+        <header class="secao-cab" data-reveal>
+          <p class="mono rotulo">{ui.secoes.comoTrabalho}</p>
+        </header>
+        <div class="principios">
+          {principios.map((p, i) => (
+            <div class="principio" data-reveal data-delay={String(i * 0.08)}>
+              <p class="mono bloco-n">{String(i + 1).padStart(2, '0')}</p>
+              <h4>{p.titulo}</h4>
+              <p>{p.texto}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- CONTATO -->
+      <section id="contato" class="wrap">
+        <div class="contato" data-reveal>
+          <div>
+            <h2>{ui.contato.titulo[0]}<em class="serif">{ui.contato.titulo[1]}</em></h2>
+            <p class="contato-texto">{ui.contato.texto}</p>
+            <a href={perfil.linkedin} class="botao primario contato-cta" target="_blank" rel="me noopener">{ui.contato.cta}</a>
+          </div>
+          <ul class="contato-links">
+            {perfil.links.map((l) => (
+              <li>
+                <a href={l.href} target={l.href.startsWith('http') ? '_blank' : undefined} rel="me noopener">
+                  <span>{l.label}</span>
+                  <span class="mono meta">{l.href.startsWith('mailto:') ? perfil.email : '↗'}</span>
+                </a>
+              </li>
+            ))}
+            <li><a href={llms}><span>{ui.contato.paraAgente}</span><span class="mono meta">{llms}</span></a></li>
+          </ul>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="wrap rodape mono">
+    <span>© {ano} {perfil.nome}</span>
+    <span>{perfil.local}</span>
+  </footer>
+</Base>
+
+<style>
+  .skip {
+    position: absolute;
+    left: -9999px;
+  }
+  .skip:focus {
+    left: 16px;
+    top: 16px;
+    background: var(--surface);
+    padding: 8px 12px;
+    z-index: 100;
+  }
+
+  /* Topo */
+  .topo {
+    position: fixed;
+    top: 14px;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    padding: 0 var(--gutter);
+    pointer-events: none;
+  }
+  .topo-pilula {
+    pointer-events: auto;
+    max-width: 760px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 8px 8px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(14, 16, 21, 0.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .marca {
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .topo-nav {
+    display: flex;
+    gap: 22px;
+    margin: 0 auto;
+    font-size: 14px;
+  }
+  .topo-nav a {
+    color: var(--muted);
+    text-decoration: none;
+  }
+  .topo-nav a:hover {
+    color: var(--text);
+  }
+  .vista {
+    display: flex;
+    padding: 3px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    margin-left: auto;
+  }
+  .vista button {
+    cursor: pointer;
+    border: 0;
+    background: transparent;
+    color: var(--faint);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 999px;
+  }
+  .vista button[aria-pressed='true'] {
+    background: var(--text);
+    color: var(--bg);
+  }
+
+  .idioma {
+    display: flex;
+    gap: 2px;
+    font-size: 12px;
+    margin-left: auto;
+  }
+  .idioma a {
+    padding: 5px 8px;
+    border-radius: 999px;
+    color: var(--faint);
+    text-decoration: none;
+  }
+  .idioma a:hover {
+    color: var(--text);
+  }
+  .idioma a[aria-current='true'] {
+    color: var(--accent);
+  }
+  .idioma + .vista {
+    margin-left: 0;
+  }
+  .sobre-texto .clarice .clarice-traducao {
+    margin-top: 8px;
+    font-size: 15px;
+    color: var(--muted);
+  }
+
+  .marca-curta {
+    display: none;
+  }
+  @media (max-width: 420px) {
+    .marca-longa {
+      display: none;
+    }
+    .marca-curta {
+      display: inline;
+    }
+  }
+
+  /* Machine */
+  .maquina {
+    padding-top: 110px;
+    padding-bottom: 60px;
+    max-width: 820px;
+  }
+  .maquina-cab {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--faint);
+    padding: 10px 16px;
+    border: 1px solid var(--line);
+    border-bottom: 0;
+    border-radius: 12px 12px 0 0;
+    background: var(--surface);
+  }
+  .maquina pre {
+    margin: 0;
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: 0 0 12px 12px;
+    background: var(--bg-2);
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* Hero */
+  .hero {
+    position: relative;
+    padding: 140px 0 80px;
+    overflow: hidden;
+    --mx: 70%;
+    --my: 40%;
+  }
+  .hero-grade {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 30%, transparent 75%);
+    opacity: 0.45;
+  }
+  .hero-brilho {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(520px circle at var(--mx) var(--my), rgba(120, 169, 255, 0.09), transparent 60%);
+    transition: background 0.1s;
+  }
+  .hero-conteudo {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 48px;
+    align-items: center;
+  }
+  .hero-conteudo > *,
+  .exp > *,
+  .projeto-grid > *,
+  .sobre > * {
+    min-width: 0;
+  }
+  .kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+    color: var(--muted);
+    padding: 6px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.02);
+    max-width: 100%;
+  }
+  .ponto-vivo {
+    flex: none;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-dim);
+  }
+  h1 {
+    margin-top: 22px;
+    font-size: clamp(40px, 6.2vw, 72px);
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+    font-weight: 600;
+  }
+  h1 em,
+  h2 em {
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    color: var(--accent);
+  }
+  .lede {
+    margin-top: 22px;
+    font-size: 18.5px;
+    color: var(--muted);
+    max-width: 34em;
+  }
+  .acoes {
+    margin-top: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .botao {
+    display: inline-flex;
+    align-items: center;
+    padding: 11px 20px;
+    border-radius: 999px;
+    border: 1px solid var(--line-2);
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    transition:
+      transform 0.2s,
+      border-color 0.2s,
+      background 0.2s;
+  }
+  .botao:hover {
+    border-color: var(--muted);
+    transform: translateY(-1px);
+  }
+  .botao.primario {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: var(--accent);
+  }
+  .botao.primario:hover {
+    background: #9ec1ff;
+  }
+
+  /* Destaques */
+  .destaques {
+    display: grid;
+    grid-template-columns: 1fr;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .destaque {
+    padding: 26px 0;
+  }
+  .destaque + .destaque {
+    border-top: 1px solid var(--line);
+  }
+  .destaque-valor {
+    font-size: clamp(28px, 3.4vw, 40px);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+  .destaque-rotulo {
+    margin-top: 6px;
+    font-size: 12.5px;
+    color: var(--faint);
+  }
+
+  /* Seções */
+  .secao {
+    padding-top: 110px;
+  }
+  .secao-cab {
+    margin-bottom: 48px;
+  }
+  .rotulo {
+    font-size: 12.5px;
+    color: var(--faint);
+    letter-spacing: 0.04em;
+  }
+  h2 {
+    margin-top: 14px;
+    font-size: clamp(32px, 4.6vw, 52px);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    font-weight: 600;
+    max-width: 18em;
+  }
+  h3 {
+    font-size: 26px;
+    letter-spacing: -0.02em;
+    font-weight: 600;
+    line-height: 1.15;
+  }
+  h4 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .meta {
+    font-size: 12.5px;
+    color: var(--faint);
+  }
+  .sub {
+    color: var(--muted);
+    font-size: 15px;
+  }
+
+  .tags {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .tags li {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    padding: 4px 9px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    background: var(--bg-2);
+  }
+
+  /* Experiência */
+  .exp {
+    display: grid;
+    gap: 24px;
+    padding: 40px 0;
+    border-top: 1px solid var(--line);
+    scroll-margin-top: 90px;
+  }
+  .exp-fixo .meta {
+    margin-bottom: 8px;
+  }
+  .exp-fixo .sub {
+    margin-top: 4px;
+  }
+  .exp-fixo .tags {
+    margin-top: 18px;
+  }
+  .exp-resumo {
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--text);
+  }
+  .citacao {
+    margin: 30px 0 6px;
+    padding-left: 20px;
+    border-left: 2px solid var(--accent);
+    font-size: clamp(26px, 3vw, 34px);
+    line-height: 1.2;
+    font-style: italic;
+    color: var(--text);
+  }
+  .blocos {
+    list-style: none;
+    padding: 0;
+    margin-top: 30px;
+    display: grid;
+    gap: 12px;
+  }
+  .bloco {
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    gap: 8px;
+    padding: 22px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+    transition: border-color 0.25s;
+  }
+  .bloco:hover {
+    border-color: var(--line-2);
+  }
+  .bloco p {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 16px;
+  }
+  .bloco-n {
+    font-size: 12px;
+    color: var(--accent);
+    padding-top: 4px;
+  }
+  .bloco-numeros {
+    margin: 18px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .bloco-numeros div {
+    display: flex;
+    flex-direction: column-reverse;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--bg-2);
+  }
+  .bloco-numeros dd {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+    line-height: 1.2;
+  }
+  .bloco-numeros dt {
+    font-size: 11.5px;
+    color: var(--faint);
+    margin-top: 2px;
+  }
+
+  /* Projetos */
+  .projetos {
+    display: grid;
+    gap: 20px;
+  }
+  .projeto {
+    position: relative;
+    padding: 28px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background:
+      radial-gradient(600px circle at 100% 0%, rgba(120, 169, 255, 0.05), transparent 50%),
+      var(--surface);
+    scroll-margin-top: 90px;
+    overflow: hidden;
+  }
+  .projeto-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  .projeto-dir {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .selo {
+    color: var(--accent-ink);
+    background: var(--accent);
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 11.5px;
+  }
+  .projeto-nome {
+    margin-top: 22px;
+    font-size: clamp(36px, 5vw, 56px);
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+  .projeto-frase {
+    margin-top: 10px;
+    font-size: clamp(22px, 2.6vw, 28px);
+    font-style: italic;
+    color: var(--accent);
+    line-height: 1.25;
+  }
+  .projeto-grid {
+    margin-top: 26px;
+    display: grid;
+    gap: 28px;
+  }
+  .projeto-desc {
+    color: var(--muted);
+    font-size: 16.5px;
+  }
+  .papel {
+    margin-top: 16px;
+    font-size: 15.5px;
+  }
+  .papel .mono {
+    color: var(--accent);
+    font-size: 12.5px;
+  }
+  .time {
+    margin-top: 10px;
+  }
+  .numeros {
+    margin: 0 0 20px;
+    display: grid;
+    gap: 0;
+    border-top: 1px solid var(--line);
+  }
+  .numeros div {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .numeros dt {
+    font-size: 12px;
+    color: var(--faint);
+  }
+  .numeros dd {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+  .aviso {
+    margin-top: 22px;
+    font-size: 12px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    background: var(--warn-bg);
+    color: var(--warn);
+  }
+  .projeto-links {
+    list-style: none;
+    padding: 0;
+    margin-top: 22px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  /* Comparativo em barras */
+  .comparativo {
+    margin-top: 20px;
+    padding: 18px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--bg-2);
+    display: grid;
+    gap: 16px;
+  }
+  .comp-rotulo {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .comp-rotulo .mono {
+    font-size: 12px;
+    color: var(--faint);
+  }
+  .comp-rotulo strong {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+  .depois .comp-rotulo strong {
+    color: var(--accent);
+  }
+  .antes .comp-rotulo strong {
+    color: var(--muted);
+  }
+  .comp-trilho {
+    position: relative;
+    height: 12px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    overflow: hidden;
+  }
+  .comp-barra {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--w);
+    border-radius: 999px;
+    transform-origin: left;
+  }
+  .depois .comp-barra {
+    background: linear-gradient(90deg, #4f86f0, var(--accent));
+    box-shadow: 0 0 18px rgba(120, 169, 255, 0.45);
+  }
+  .antes .comp-barra {
+    background: var(--line-2);
+  }
+  .comp-faixa {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--l);
+    right: 0;
+    background: repeating-linear-gradient(-45deg, var(--line-2) 0 4px, transparent 4px 8px);
+    transform-origin: left;
+  }
+  .comparativo figcaption {
+    font-size: 11.5px;
+    color: var(--faint);
+  }
+  .js [data-reveal] .comp-barra,
+  .js [data-reveal] .comp-faixa {
+    transform: scaleX(0);
+    transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.3s;
+  }
+  .js [data-reveal].is-in .comp-barra,
+  .js [data-reveal].is-in .comp-faixa {
+    transform: scaleX(1);
+  }
+  .js [data-reveal].is-in .antes .comp-faixa {
+    transition-delay: 1s;
+  }
+
+  /* Foto e caso nos projetos */
+  .projeto-foto {
+    margin-bottom: 20px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    aspect-ratio: 19 / 16;
+  }
+  .projeto-foto img,
+  .sobre-foto img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .caso {
+    margin-top: 26px;
+    padding: 20px 22px;
+    border-radius: 14px;
+    border: 1px solid rgba(120, 169, 255, 0.22);
+    background: var(--accent-dim);
+  }
+  .caso-titulo {
+    font-size: 12px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .caso ol {
+    margin-top: 12px;
+    padding-left: 20px;
+    display: grid;
+    gap: 8px;
+    font-size: 15.5px;
+  }
+  .caso li::marker {
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  /* Sobre: foto e citação */
+  .sobre-foto {
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    aspect-ratio: 1;
+    max-width: 460px;
+  }
+  .clarice {
+    margin-top: 26px;
+    padding: 20px 22px;
+    border-left: 2px solid var(--accent);
+    background: var(--surface);
+    border-radius: 0 12px 12px 0;
+  }
+  .sobre-texto .clarice p.serif {
+    font-size: 26px;
+    line-height: 1.25;
+    font-style: italic;
+    color: var(--text);
+  }
+  .sobre-texto .clarice .clarice-comentario {
+    margin-top: 14px;
+    font-size: 15.5px;
+    color: var(--muted);
+  }
+  .clarice cite {
+    display: block;
+    margin-top: 8px;
+    font-style: normal;
+    font-size: 12px;
+    color: var(--faint);
+  }
+
+  /* Contato */
+  .contato-texto {
+    margin-top: 16px;
+    color: var(--muted);
+    font-size: 17px;
+  }
+  .contato-cta {
+    margin-top: 22px;
+  }
+
+  /* Princípios */
+  .principios {
+    display: grid;
+    gap: 14px;
+  }
+  .principio {
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+  }
+  .principio h4 {
+    margin-top: 14px;
+  }
+  .principio p:last-child {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 16px;
+  }
+
+  /* Sobre */
+  .sobre {
+    display: grid;
+    gap: 32px;
+  }
+  .sobre-frase {
+    font-size: clamp(32px, 4vw, 46px);
+    line-height: 1.1;
+    font-style: italic;
+    letter-spacing: -0.01em;
+    margin-bottom: 22px;
+  }
+  .sobre-texto p {
+    color: var(--muted);
+    font-size: 17.5px;
+  }
+  .sobre-texto p + p {
+    margin-top: 14px;
+  }
+  .formacao {
+    list-style: none;
+    padding: 0;
+    margin-top: 28px;
+    border-top: 1px solid var(--line);
+  }
+  .formacao li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* Contato */
+  #contato {
+    padding-top: 110px;
+  }
+  .contato {
+    padding: 40px 28px;
+    border-radius: 24px;
+    border: 1px solid var(--line);
+    background:
+      radial-gradient(700px circle at 0% 100%, rgba(120, 169, 255, 0.08), transparent 55%),
+      var(--surface);
+    display: grid;
+    gap: 32px;
+  }
+  .contato h2 {
+    margin-top: 0;
+  }
+  .contato-links {
+    list-style: none;
+    padding: 0;
+    border-top: 1px solid var(--line);
+  }
+  .contato-links a {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 22px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: padding 0.25s, color 0.25s;
+  }
+  .contato-links a:hover {
+    color: var(--accent);
+    padding-left: 6px;
+  }
+
+  .rodape {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-top: 40px;
+    padding-bottom: 40px;
+    font-size: 12px;
+    color: var(--faint);
+  }
+
+  @media (min-width: 720px) {
+    .destaques {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .destaque + .destaque {
+      border-top: 0;
+      border-left: 1px solid var(--line);
+      padding-left: 28px;
+    }
+    .principios {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .projeto {
+      padding: 40px;
+    }
+    .projeto-grid {
+      grid-template-columns: 1.5fr 1fr;
+      gap: 48px;
+    }
+    .contato {
+      padding: 56px;
+      grid-template-columns: 1fr 1fr;
+      align-items: end;
+    }
+  }
+
+  @media (min-width: 960px) {
+    .hero {
+      padding: 150px 0 100px;
+    }
+    .hero-conteudo {
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+      gap: 56px;
+    }
+    .exp {
+      grid-template-columns: 280px 1fr;
+      gap: 56px;
+    }
+    .exp-fixo {
+      position: sticky;
+      top: 110px;
+    }
+    .sobre {
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+      gap: 64px;
+      align-items: start;
+    }
+    .sobre-foto {
+      position: sticky;
+      top: 110px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .topo-nav {
+      display: none;
+    }
+    .topo-pilula {
+      padding-left: 16px;
+    }
+    .hero {
+      padding-top: 110px;
+    }
+    .kicker {
+      font-size: 11.5px;
+    }
+    .topo-pilula {
+      gap: 10px;
+      padding-right: 6px;
+    }
+    .idioma a {
+      padding: 5px 6px;
+    }
+    .vista button {
+      padding: 5px 10px;
+    }
+    .lede {
+      font-size: 17px;
+    }
+    .bloco {
+      grid-template-columns: 1fr;
+      padding: 18px;
+    }
+    .contato-links a {
+      font-size: 19px;
+    }
+  }
+</style>

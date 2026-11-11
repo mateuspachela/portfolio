@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useInView, useReducedMotion } from 'motion/react';
-import { execucoes, type Execucao, type Passo } from '../data/agentRuns';
+import { consoles, type Execucao, type Passo } from '../data/agentRuns';
 import './AgentConsole.css';
 
 type Estado = {
@@ -18,7 +18,8 @@ const esperar = (ms: number, sinal: { cancelado: boolean }) =>
     setTimeout(() => (sinal.cancelado ? falha(new Error('cancelado')) : ok()), ms);
   });
 
-export default function AgentConsole() {
+export default function AgentConsole({ lang = 'pt' }: { lang?: 'pt' | 'en' }) {
+  const { ui, execucoes } = consoles[lang];
   const reduz = useReducedMotion();
   const raiz = useRef<HTMLDivElement>(null);
   const visivel = useInView(raiz, { once: true, amount: 0.2 });
@@ -80,9 +81,9 @@ export default function AgentConsole() {
         <span className="pontos" aria-hidden="true">
           <i /> <i /> <i />
         </span>
-        <span className="mono console-titulo">mateus@agente — ~/portfolio</span>
+        <span className="mono console-titulo">{ui.titulo}</span>
         <span className="mono console-status" data-on={!estado.fim && estado.digitado.length > 0}>
-          {estado.fim ? 'pronto' : estado.digitado ? 'rodando' : 'aguardando'}
+          {estado.fim ? ui.status.pronto : estado.digitado ? ui.status.rodando : ui.status.aguardando}
         </span>
       </div>
 
@@ -105,17 +106,17 @@ export default function AgentConsole() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
             >
-              <p className="resultado-rotulo">✓ resultado</p>
+              <p className="resultado-rotulo">{ui.resultado}</p>
               <p className="resultado-texto">{exec.resultado}</p>
               <a className="resultado-link" href={exec.alvo.href}>
-                ver {exec.alvo.label} ↓
+                {ui.ver} {exec.alvo.label} ↓
               </a>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      <div className="console-opcoes" role="group" aria-label="Escolha uma tarefa para o agente">
+      <div className="console-opcoes" role="group" aria-label={ui.opcoesAria}>
         {execucoes.map((e, i) => (
           <button
             key={e.id}
@@ -128,7 +129,7 @@ export default function AgentConsole() {
           </button>
         ))}
       </div>
-      <p className="console-nota">Demonstração roteirizada do que meus agentes fazem. Sem dados reais nem código interno.</p>
+      <p className="console-nota">{ui.nota}</p>
     </div>
   );
 }
